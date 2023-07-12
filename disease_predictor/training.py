@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -9,6 +8,7 @@ symp=pd.read_csv('https://raw.githubusercontent.com/shellyannissa/Compute-Diseas
 df=pd.read_csv('https://raw.githubusercontent.com/shellyannissa/Compute-Disease-Probability/main/dataset.csv')
 symptoms=symp['Symptom']
 symptoms=sorted(symptoms)
+
 train=pd.DataFrame()
 t=df.drop(columns='Disease')
 #creating a hot set code dataframe
@@ -28,12 +28,11 @@ y=train.iloc[:,0]
 
 model=LogisticRegression()
 model.fit(x,y)
-'''
+
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.5, random_state=0)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
-accuracy of 100 percent
-'''
+# accuracy of 100 percent
 
 pickle.dump(model,open('symptoms.pkl','wb'))
