@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="#" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Predictor</title>
+</head>
+<style>
+    body{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .symptoms{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #formId{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+    .data{
+        visibility: none;
+        display: none;
+    }
+</style>
+<body>
+    <h2>Tick all your symptoms</h2>
+    <div class="symptoms">
+        <form action="{{url_for('predict')}}" method="POST" id="formId">
+            <div class="checkboxes"></div>
+            <input type="submit" value="Predict">
+        </form>
+    </div>
+    <br>
+    <h1 id="result"></h1>
+    <script>
+        const symptoms = ['Abdominal pain',
+        'Abnormal menstruation',
+        'Acidity',
+        'Acute liver failure',
+        'Altered sensorium',
+        'Anxiety',
+        'Back pain',
+        'Belly pain',
+        'Blackheads',
+        'Bladder discomfort',
+        'Blister',
+        'Blood in sputum',
+        'Bloody stool',
+        'Blurred and distorted vision',
+        'Breathlessness',
+        'Brittle nails',
+        'Bruising',
+        'Burning micturition',
+        'Chest pain',
+        'Chills',
+        'Cold hands and feets',
+        'Coma',
+        'Congestion',
+        'Constipation',
+        'Continuous feel of urine',
+        'Continuous sneezing',
+        'Cough',
+        'Cramps',
+        'Dark urine',
+        'Dehydration',
+        'Depression',
+        'Diarrhoea',
+        'Dischromic  patches',
+        'Distention of abdomen',
+        'Dizziness',
+        'Drying and tingling lips',
+        'Enlarged thyroid',
+        'Excessive hunger',
+        'Extra marital contacts',
+        'Family history',
+        'Fast heart rate',
+        'Fatigue',
+        'Fluid overload',
+        'Foul smell of urine',
+        'Headache',
+        'High fever',
+        'Hip joint pain',
+        'History of alcohol consumption',
+        'Increased appetite',
+        'Indigestion',
+        'Inflammatory nails',
+        'Internal itching',
+        'Irregular sugar level',
+        'Irritability',
+        'Irritation in anus',
+        'Itching',
+        'Joint pain',
+        'Knee pain',
+        'Lack of concentration',
+        'Lethargy',
+        'Loss of appetite',
+        'Loss of balance',
+        'Loss of smell',
+        'Malaise',
+        'Mild fever',
+        'Mood swings',
+        'Movement stiffness',
+        'Mucoid sputum',
+        'Muscle pain',
+        'Muscle wasting',
+        'Muscle weakness',
+        'Nausea',
+        'Neck pain',
+        'Nodal skin eruptions',
+        'Obesity',
+        'Pain behind the eyes',
+        'Pain during bowel movements',
+        'Pain in anal region',
+        'Painful walking',
+        'Palpitations',
+        'Passage of gases',
+        'Patches in throat',
+        'Phlegm',
+        'Polyuria',
+        'Prominent veins on calf',
+        'Puffy face and eyes',
+        'Pus filled pimples',
+        'Receiving blood transfusion',
+        'Receiving unsterile injections',
+        'Red sore around nose',
+        'Red spots over body',
+        'Redness of eyes',
+        'Restlessness',
+        'Runny nose',
+        'Rusty sputum',
+        'Scurring',
+        'Shivering',
+        'Silver like dusting',
+        'Sinus pressure',
+        'Skin peeling',
+        'Skin rash',
+        'Slurred speech',
+        'Small dents in nails',
+        'Spinning movements',
+        'Spotting  urination',
+        'Stiff neck',
+        'Stomach bleeding',
+        'Stomach pain',
+        'Sunken eyes',
+        'Sweating',
+        'Swelled lymph nodes',
+        'Swelling joints',
+        'Swelling of stomach',
+        'Swollen blood vessels',
+        'Swollen extremeties',
+        'Swollen legs',
+        'Throat irritation',
+        'Toxic look (typhos)',
+        'Ulcers on tongue',
+        'Unsteadiness',
+        'Visual disturbances',
+        'Vomiting',
+        'Watering from eyes',
+        'Weakness in limbs',
+        'Weakness of one body side',
+        'Weight gain',
+        'Weight loss',
+        'Yellow crust ooze',
+        'Yellow urine',
+        'Yellowing of eyes',
+        'Yellowish skin'];
+
+        const updateCheckboxValue = (checkbox) => {
+            if (checkbox.checked) {
+                checkbox.value = "1";
+            } else {
+                checkbox.value = "0";
+            }
+        }
+
+        const list = document.querySelector(".checkboxes");
+        var loop = '';
+        for ( var i = 0 ; i < symptoms.length ; i++ ) {
+            loop = loop.concat(`
+                <div>
+                    <input class='radio-input' type='checkbox' name='${symptoms[i]}' id='check${i}' value='1' onchange='${updateCheckboxValue(this)}'>
+                    <label class='radio-label' for='check${i}'>${symptoms[i]}</label>
+                </div>
+            `);
+        }
+        loop = loop.concat(`<input class='data' type='text' name='data'>`);
+        list.innerHTML = loop;
+
+        const form = document.getElementById("formId");
+        const dataArray = document.querySelector(".data");
+        var Disease = null;
+
+        const resultDiv = document.getElementById("result");
+        const renderResult = (Disease) => {
+            var result = `Our predictions say that you might have ${Disease['result']}`;
+            resultDiv.innerText = result;
+        }
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            var formdata = new FormData(form);
+            const data = Object.fromEntries(formdata.entries());
+
+            let values = new Array();
+            for ( let i = 0 ; i < symptoms.length ; i++ ) {
+                if ( symptoms[i] in data ) {
+                    values.push(1);
+                } else {
+                    values .push(0);
+                }
+            }
+            dataArray.value = values;
+            data['data'] = values;
+            console.log(data);
+
+            // form.submit();
+
+            const jsonData = JSON.stringify(data);
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "{{url_for('predict')}}");
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    Disease = JSON.parse(xhr.responseText);
+                    console.log(Disease);
+                    renderResult(Disease);
+                } else {
+                    console.error(xhr.statusText);
+                }
+            };
+            xhr.send(jsonData);
+        });
+    </script>
+</body>
+</html>
