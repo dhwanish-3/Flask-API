@@ -32,7 +32,8 @@
     }
 </style>
 <body>
-    <h2>Tick all your symptoms</h2>
+    <h2>Disease Predictor</h2>
+    <h3>Tick all your symptoms</h3>
     <div class="symptoms">
         <form action="{{url_for('predict')}}" method="POST" id="formId">
             <div class="checkboxes"></div>
@@ -211,35 +212,39 @@
             var formdata = new FormData(form);
             const data = Object.fromEntries(formdata.entries());
 
-            let values = new Array();
-            for ( let i = 0 ; i < symptoms.length ; i++ ) {
-                if ( symptoms[i] in data ) {
-                    values.push(1);
-                } else {
-                    values .push(0);
+            if (data['data'].length < 3) {
+                resultDiv.innerText = "Please select at least 3 symptoms";
+            } else {
+                let values = new Array();
+                for ( let i = 0 ; i < symptoms.length ; i++ ) {
+                    if ( symptoms[i] in data ) {
+                        values.push(1);
+                    } else {
+                        values .push(0);
+                    }
                 }
+                dataArray.value = values;
+                data['data'] = values;
+                console.log(data);
+
+                // form.submit();
+
+                const jsonData = JSON.stringify(data);
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "{{url_for('predict')}}");
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        Disease = JSON.parse(xhr.responseText);
+                        console.log(Disease);
+                        renderResult(Disease);
+                    } else {
+                        console.error(xhr.statusText);
+                    }
+                };
+                xhr.send(jsonData);
             }
-            dataArray.value = values;
-            data['data'] = values;
-            console.log(data);
-
-            // form.submit();
-
-            const jsonData = JSON.stringify(data);
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "{{url_for('predict')}}");
-            xhr.setRequestHeader("Content-Type", "application/json");
-
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    Disease = JSON.parse(xhr.responseText);
-                    console.log(Disease);
-                    renderResult(Disease);
-                } else {
-                    console.error(xhr.statusText);
-                }
-            };
-            xhr.send(jsonData);
         });
     </script>
 </body>

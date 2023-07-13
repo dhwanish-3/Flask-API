@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="#" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-Ray Prediction</title>
+</head>
+<style>
+    :root{
+        --grey: #aeaeae;
+        --darkGrey: #6a6a6a;
+        --containerColor: #dedede;
+        --textColor: white;
+        --headerColor: #472867;
+        --mainColor: #5f16bf;
+    }
+    .button{
+        padding: 0.2rem 0.6rem;
+        display: flex;
+        background: transparent;
+        border-radius: 0.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        justify-content: center;
+        align-items: center;
+        transition: 300ms all;
+        border: 1px solid black;
+    }
+    body{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .main{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+    .image-container{
+        width: 24rem;
+        height: 30rem;
+        background-color: var(--containerColor);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+    input[type="file"]{
+        display: none;
+    }
+    .image-container img{
+        width: 10rem;
+    }
+    .image-container span{
+        color: var(--darkGrey);
+        text-align: center;
+    }
+    /* image selected or not */
+    .select-image{
+        display: none;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.9rem;
+    }
+    .select-image.show{
+        display: block;
+    }
+    /* when no image selected */
+    .preview-label{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        height: 100%;
+        width: 100%;
+        gap: 2rem;
+    }
+    .preview-label span{
+        margin-top: 3rem;
+    }
+    /* when image selected */
+    .preview-label.dont-show{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        cursor: none;
+        pointer-events: none;
+    }
+    .preview-label.dont-show span{
+        display: none;
+    }
+    .preview-label.dont-show img{
+        width: 100%;
+        height: 100%;
+    }
+</style>
+<body>
+    <h2>X-Ray Predictor</h2>
+    <p>Please select an image of x-ray</p>
+    <div class="main">
+        <div class="image-container">
+            <input type="file" id="file-input" name="image">
+            <label for="file-input" class="preview-label">
+                <img id="preview-image" src="{{ url_for('static', filename='images/preview.png') }}" alt="Preview">
+                <span>Your selected image file will appear here</span>
+            </label>
+        </div>
+        <label for="file-input" class="select-image">Please select an image</label>
+        <label for="file-input" class="button select-file">Select Image</label>
+    </div>
+    <hr>
+    <div class="button" onclick="predict()">Predict</div>
+    <h2 id="result"></h2>
+    <script>
+        const diseases = [
+        'Atelectasis',
+        'Cardiomegaly',
+        'Consolidation',
+        'Pleural effusion',
+        'Hernia',
+        'Infiltration',
+        'Growth or Lumps',
+        'No Finding',
+        'Lung Nodule',
+        'Pneumonia',
+        'Pneumothorax'
+        ];
+        const fileInput = document.getElementById('file-input');
+        const fileContainer = document.querySelector('.image-container');
+        const previewImage = document.getElementById('preview-image');
+        const labelForFileInput=document.querySelector(".preview-label");
+        let selectedFile = null;
+        fileInput.addEventListener('change', () => {
+            selectedFile = fileInput.files[0];
+            
+            if (selectedFile) {
+                const reader = new FileReader();    
+                reader.addEventListener('load', () => {
+                previewImage.src = reader.result;
+                previewImage.style.display = "block";
+                labelForFileInput.setAttribute('for','none');
+                labelForFileInput.classList.add("dont-show");
+                console.log(reader.result);
+                });
+                reader.readAsDataURL(selectedFile);
+            }
+        });
+        const selectImage=document.querySelector(".select-image");
+        const resultDiv = document.getElementById("result");
+
+        const renderResult = (Disease) => {
+            var result;
+            if (Disease != 7){
+                result = `Our predictions say that you might have ${diseases[Disease%diseases.length]}`;
+            } else {
+                result = "Our predictions say that you are healthy";
+            }
+            resultDiv.innerText = result;
+        }
+        var imageData = null;
+        const predict = () => {
+            if(selectedFile == null) {
+                selectImage.classList.add("show");
+                console.log("not");
+            } else {
+                console.log("ok");
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "{{url_for('x_ray')}}");
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var Disease = JSON.parse(xhr.responseText);
+                        console.log(Disease);
+                        renderResult(Disease['result']);
+                    } else {
+                        console.error(xhr.statusText);
+                    }
+                };
+                xhr.send(imageData);
+            }
+        }
+    </script>
+    
+</body>
+</html>
